@@ -19,11 +19,18 @@ class Post(models.Model):
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
         PUBLISHED = 'published', 'Published'
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        #cascade means that if the user is deleted, all their posts will also be deleted
+        #set null means that if the category is deleted, the category field in the post will be set to null
+        on_delete=models.SET_NULL,
+        null=True, 
+        blank=True, 
+    )
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
     body = models.TextField()
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     tags = models.ManyToManyField(Tag, blank=True)
     status = models.CharField(max_length=10, choices= Status.choices, default=Status.DRAFT)
     created_at = models.DateTimeField(auto_now_add=True)

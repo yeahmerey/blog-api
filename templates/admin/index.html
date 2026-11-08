@@ -1,0 +1,97 @@
+{% extends "admin/index.html" %}
+{% load i18n unfold %}
+{% load static %}
+
+{% block content %}
+<div class="grid grid-cols-1 gap-4 mb-8">
+    <div class="bg-white rounded-default shadow-xs p-6 dark:bg-base-900">
+        <h2 class="text-lg font-semibold mb-4">
+            Posts per Category
+        </h2>
+
+        <div style="height: 350px;">
+            <canvas id="postsByCategoryChart"></canvas>
+        </div>
+    </div>
+</div>
+
+{{ chart_data|json_script:"posts-chart-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const chartElement = document.getElementById("postsByCategoryChart");
+        const chartDataElement = document.getElementById("posts-chart-data");
+
+        if (!chartElement || !chartDataElement || typeof Chart === "undefined") {
+            return;
+        }
+
+        const chartData = JSON.parse(chartDataElement.textContent);
+
+        new Chart(chartElement, {
+            type: "bar",
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+<div class="bg-white rounded-default shadow-xs p-6 mb-8 dark:bg-base-900">
+    <h2 class="text-lg font-semibold mb-4">
+        Top 5 Authors
+    </h2>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b dark:border-base-700">
+                    <th class="text-left py-3 px-4">Author</th>
+                    <th class="text-left py-3 px-4">Email</th>
+                    <th class="text-right py-3 px-4">Posts</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for author in top_authors %}
+                    <tr class="border-b dark:border-base-700">
+                        <td class="py-3 px-4">
+                            {{ author.first_name }} {{ author.last_name }}
+                        </td>
+                        <td class="py-3 px-4">
+                            {{ author.email }}
+                        </td>
+                        <td class="py-3 px-4 text-right font-semibold">
+                            {{ author.posts_count }}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="3" class="py-4 text-center">
+                            No authors found.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{ block.super }}
+{% endblock %}

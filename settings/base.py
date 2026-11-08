@@ -1,5 +1,6 @@
 import os
 from settings.conf import * 
+from django.urls import reverse_lazy
 
 # ------------------------------------
 # Path
@@ -15,12 +16,17 @@ AUTH_USER_MODEL = 'auths.CustomUser'
 # Apps
 #
 DJANGO_AND_THIRD_PARTY_APPS = [
+    'unfold', 
+    'unfold.contrib.filters', 
+    'unfold.contrib.forms', 
+    
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
 ]
 
 PROJECT_APPS = [
@@ -45,11 +51,144 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+UNFOLD = {
+    "SITE_TITLE": "Blog API", 
+    "SITE_HEADER": "Blog Administration", 
+    "SITE_SUBHEADER": "Content Management System",
+    "SITE_SYMBOL": "article", 
+
+    "COLORS" : {
+        "primary" : {
+            "50" : "#eff6ff", 
+            "100" : "#dbeafe", 
+            "200" : "#bfdbfe", 
+            "300" : "#93c5fd", 
+            "400" : "#60a5fa", 
+            "500" : "#3b82f6", 
+            "600" : "#2563eb", 
+            "700" : "#1d4ed8", 
+            "800" : "#1e40af", 
+            "900" : "#1e3a8a", 
+            "950" : "#172554", 
+        },
+    },
+    "COMMAND" : {
+        "search_models" : True, 
+    },
+    "DASHBOARD_CALLBACK": "apps.blog.callbacks.dashboard_callback",
+    "TABS": [
+        {
+            "models": ["blog.post"],
+            "items": [
+                {
+                    "title": "All",
+                    "link": "/admin/blog/post/",
+                },
+                {
+                    "title": "Published",
+                    "link": "/admin/blog/post/?status__exact=published",
+                },
+                {
+                    "title": "Drafts",
+                    "link": "/admin/blog/post/?status__exact=draft",
+                },
+            ],
+        },
+    ],
+    "ENVIRONMENT" : "apps.blog.callbacks.environment_callback", 
+    "SITE_DROPDOWN" : [
+        {
+            "icon" : "code", 
+            "title" : "GitHub Repository", 
+            "link" : "https://github.com/", 
+        }, 
+        {
+            "icon" : "description", 
+            "title" : "Unfold Documentation", 
+            "link" : "https://unfoldadmin.com/docs/"
+        }, 
+    ], 
+    "SIDEBAR" : {
+        "show_search" : True, 
+        "show_all_applications" : False, 
+
+        "navigation" : [ 
+            {
+                "title" : "Overview", 
+                "separator":True ,
+                "items":  [
+                    {
+                        "title" : "Dashboard", 
+                        "icon" : "dashboard", 
+                        "link" : reverse_lazy("admin:index"), 
+                    },
+                ],
+            },
+            {
+                "title" : "Content", 
+                "separator" : True, 
+                "items" : [
+                    {
+                        "title" : "Posts", 
+                        "icon" : "article", 
+                        "link" : reverse_lazy(
+                            "admin:blog_post_changelist"
+                        ),
+                        "badge" : "apps.blog.callbacks.drafts_badge",
+                    },
+                    {
+                        "title" : "Comments", 
+                        "icon" : "comment", 
+                        "link": reverse_lazy(
+                            "admin:blog_comment_changelist"
+                        ), 
+                    }, 
+                    {
+                        "title" : "Categories", 
+                        "icon" : "folder", 
+                        "link" : reverse_lazy(
+                            "admin:blog_category_changelist"
+                        ),
+                    }, 
+                    {
+                        "title" : "Tags", 
+                        "icon": "sell", 
+                        "link" : reverse_lazy(
+                            "admin:blog_tag_changelist"
+                        ),
+                    },
+                ], 
+            },
+            {
+                "title" : "Users & Access", 
+                "separator" : True, 
+                "permission" : lambda request : request.user.is_superuser, 
+                "items": [
+                    {
+                        "title": "Users", 
+                        "icon" : "people", 
+                        "link" : reverse_lazy(
+                            "admin:auths_customuser_changelist"
+                        ), 
+                    }, 
+                    {
+                        "title" : "Groups", 
+                        "icon" : "shield", 
+                        "link" : reverse_lazy(
+                            "admin:auth_group_changelist"
+                        ), 
+                    }, 
+                ],
+            },
+        ], 
+    }
+}
+
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, "templates")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
