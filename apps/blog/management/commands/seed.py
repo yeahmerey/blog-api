@@ -367,10 +367,12 @@ class Command(BaseCommand):
         
         now = timezone.now()
 
+        
+
         for comment in comments_to_create:
             post_created_at = comment.post.created_at
 
-            time_difference = now - post.created_at
+            time_difference = now - post_created_at
 
             random_seconds = randint(
                 0, 
