@@ -1,5 +1,5 @@
-from datetime import datetime
-from random import choice, random, sample
+from datetime import datetime, timedelta
+from random import choice, random, sample, randint
 from typing import Any 
 
 from faker import Faker
@@ -10,6 +10,7 @@ from django.core.management.base import (
 )
 from django.contrib.auth.hashers import make_password
 from django.utils.text import slugify
+from django.utils import timezone
 from apps.auths.models import CustomUser
 from apps.blog.models import (
     Category,
@@ -24,7 +25,7 @@ class Command(BaseCommand):
         "example.com", 
         "kbtu.kz"
     )
-
+    
     DEFAULT_PASSWORD = "SeedPassword123!"
     SEED_PASSWORD = "SeedPassword123!"
     DEFAULT_USERS = 20 
@@ -73,6 +74,13 @@ class Command(BaseCommand):
     
     MIN_COMMENT_SENTENCES=1
     MAX_COMMENT_SENTENCES=3
+
+
+    #realistic dates: 
+    POST_DATE_RANGE_DAYS=365
+    EDITED_POSTS_PERSENTAGE=0.3
+    MIN_UPDATE_DELAY_DAYS=1
+    MAX_UPDATE_DELAY_DAYS=30
 
     def __get_email_from_names(
             self, 
@@ -272,6 +280,29 @@ class Command(BaseCommand):
                 )
             )
         Post.objects.bulk_create(posts_to_create)
+
+        now = timezone.now()
+
+        for post in posts_to_create:
+            random_days_ago = randint(0, self.POST_DATE_RANGE_DAYS)
+            post.created_at = now - timedelta(days=random_days_ago)
+
+            if random() < self.EDITED_POSTS_PERSENTAGE:
+                update_delay = randint(
+                    self.MIN_UPDATE_DELAY_DAYS, 
+                    self.MAX_UPDATE_DELAY_DAYS,
+                )
+                updated_at = post.created_at + timedelta(days=update_delay)
+                post.updated_at = min(updated_at, now)
+            else:
+                post.updated_at = post.created_at
+
+        Post.objects.bulk_update(
+            posts_to_create, 
+            ["created_at", "updated_at"]
+        )
+
+
         for post in posts_to_create:
             post_tags: list[Tag] = sample(
                 tags, 
@@ -332,6 +363,29 @@ class Command(BaseCommand):
                 )
             )
         Comment.objects.bulk_create(comments_to_create)
+        
+        
+        now = timezone.now()
+
+        for comment in comments_to_create:
+            post_created_at = comment.post.created_at
+
+            time_difference = now - post.created_at
+
+            random_seconds = randint(
+                0, 
+                int(time_difference.total_seconds()),
+            )
+            comment.created_at = post_created_at + timedelta(
+                seconds = random_seconds
+            )
+        
+        Comment.objects.bulk_update(
+            comments_to_create, 
+            ["created_at"]
+        )
+        
+        
         self.stdout.write(
             f"Created {len(comments_to_create)} comments successfully."
         )
